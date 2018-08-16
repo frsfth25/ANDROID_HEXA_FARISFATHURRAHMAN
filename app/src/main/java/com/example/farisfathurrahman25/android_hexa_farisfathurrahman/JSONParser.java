@@ -26,7 +26,7 @@ public class JSONParser
     static InputStream is = null;
     static JSONObject jObj = null;
     static String json = "";
-    static String serverAddress = "http://hexavara.ip-dynamic.com/androidrec/public/api/login";
+    static String serverAddress = "http://hexavara.ip-dynamic.com/androidrec/public/api/";
 
     // constructor
     public JSONParser() {
