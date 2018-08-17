@@ -1,16 +1,21 @@
 package com.example.farisfathurrahman25.android_hexa_farisfathurrahman;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,6 +55,15 @@ public class JSONParser
                 httpPost.setEntity(new UrlEncodedFormEntity(params));
 
                 HttpResponse httpResponse = httpClient.execute(httpPost);
+
+                if(httpResponse.getStatusLine().getStatusCode()==200){
+                    String server_response = EntityUtils.toString(httpResponse.getEntity());
+                    Log.i("Server response", server_response );
+                } else {
+                    Log.i("Server response", "Failed to get server response" );
+                    return null;
+                }
+
                 HttpEntity httpEntity = httpResponse.getEntity();
                 is = httpEntity.getContent();
 
@@ -61,10 +75,18 @@ public class JSONParser
                 HttpGet httpGet = new HttpGet(url);
 
                 HttpResponse httpResponse = httpClient.execute(httpGet);
+
+                if(httpResponse.getStatusLine().getStatusCode()==200){
+                    String server_response = EntityUtils.toString(httpResponse.getEntity());
+                    Log.i("Server response", server_response );
+                } else {
+                    Log.i("Server response", "Failed to get server response" );
+                    return null;
+                }
+
                 HttpEntity httpEntity = httpResponse.getEntity();
                 is = httpEntity.getContent();
             }
-
 
         } catch (IOException e) {
             e.printStackTrace();
