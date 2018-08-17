@@ -18,6 +18,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +78,18 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
 
     @Override
     public void taskCompletionResult(HashMap<String, String> result) {
+
+        if (result==null)
+        {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    // runs on UI thread
+                    Toast.makeText(getApplicationContext(),"email atau password salah.", Toast.LENGTH_SHORT).show();
+
+                }
+            });
+            return;
+        }
 
         if(result.get(Tags.TAG_SUCCESS).equals("1")){
             textViewError.setVisibility(View.INVISIBLE);
@@ -133,6 +149,18 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
 
                 JSONObject json = jsonParser.makeHttpRequest(Tags.URL_LAST_PATH, "POST", params);
 
+                if (json==null)
+                {
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            // runs on UI thread
+                            Toast.makeText(getApplicationContext(),"email atau password salah.", Toast.LENGTH_SHORT).show();
+
+                        }
+                    });
+                    return null;
+                }
+
                 Log.d("User Details", json.toString());
 
                 if (json.has("token"))
@@ -159,8 +187,15 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
                     result.put(Tags.TAG_PHOTO, json.getString(Tags.TAG_PHOTO));
                     photo = json.getString(Tags.TAG_PHOTO);
                 }
-                else
-                    Toast.makeText(getApplicationContext(),"Either Username or Pass is wrong!", Toast.LENGTH_SHORT);
+                else{
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            // runs on UI thread
+                            Toast.makeText(getApplicationContext(),"email atau password salah.", Toast.LENGTH_SHORT).show();
+
+                        }
+                    });
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -182,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
      //       return "Invalid Username format!";
      //   }
         if (passwordStr.length()<6){
-            return "Password cannot shorter than 6!";
+            return "Password cannot be shorter than 6 characters!";
         }
         return "success";
     }
