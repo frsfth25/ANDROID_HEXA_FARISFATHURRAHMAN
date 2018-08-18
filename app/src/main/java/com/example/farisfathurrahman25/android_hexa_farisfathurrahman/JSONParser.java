@@ -57,15 +57,15 @@ public class JSONParser
                 HttpResponse httpResponse = httpClient.execute(httpPost);
 
                 if(httpResponse.getStatusLine().getStatusCode()==200){
+                    //String server_response = EntityUtils.toString(httpResponse.getEntity());
+                    //Log.i("Server response", server_response );
+                    HttpEntity httpEntity = httpResponse.getEntity();
+                    is = httpEntity.getContent();
+                } else {
                     String server_response = EntityUtils.toString(httpResponse.getEntity());
                     Log.i("Server response", server_response );
-                } else {
-                    Log.i("Server response", "Failed to get server response" );
                     return null;
                 }
-
-                HttpEntity httpEntity = httpResponse.getEntity();
-                is = httpEntity.getContent();
 
             }else if(method == "GET"){
                 // request method is GET
@@ -77,15 +77,16 @@ public class JSONParser
                 HttpResponse httpResponse = httpClient.execute(httpGet);
 
                 if(httpResponse.getStatusLine().getStatusCode()==200){
+                    //String server_response = EntityUtils.toString(httpResponse.getEntity());
+                    //Log.i("Server response", server_response );
+                    HttpEntity httpEntity = httpResponse.getEntity();
+                    is = httpEntity.getContent();
+                } else {
                     String server_response = EntityUtils.toString(httpResponse.getEntity());
                     Log.i("Server response", server_response );
-                } else {
-                    Log.i("Server response", "Failed to get server response" );
                     return null;
                 }
 
-                HttpEntity httpEntity = httpResponse.getEntity();
-                is = httpEntity.getContent();
             }
 
         } catch (IOException e) {
