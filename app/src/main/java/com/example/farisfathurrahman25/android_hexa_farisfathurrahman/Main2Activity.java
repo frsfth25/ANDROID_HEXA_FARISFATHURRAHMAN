@@ -1,6 +1,9 @@
 package com.example.farisfathurrahman25.android_hexa_farisfathurrahman;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -53,7 +56,7 @@ public class Main2Activity extends AppCompatActivity{
 
     private RecyclerView recyclerItems;
     private RecyclerView.Adapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
+    //private RecyclerView.LayoutManager mLayoutManager;
 
     private ProgressDialog pDialog;
 
@@ -62,12 +65,16 @@ public class Main2Activity extends AppCompatActivity{
     String url = "http://hexavara.ip-dynamic.com/androidrec/public/api/mylist";
 
     ArrayList<Item> itemList;
-    ItemAdapter itemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+
+        if(!internetKontrol()){
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+            //finish();
+        }
 
         profileImage = (CircleImageView) findViewById(R.id.profile_image);
 
@@ -77,14 +84,6 @@ public class Main2Activity extends AppCompatActivity{
         textAddress = findViewById(R.id.txtAddress);
 
         recyclerItems = findViewById(R.id.recyclerView);
-
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
- //       recyclerItems.setHasFixedSize(true);
-
-        // use a linear layout manager
-//        mLayoutManager = new LinearLayoutManager(this);
-//        recyclerItems.setLayoutManager(mLayoutManager);
 
         Glide.with(this).load("http://" + getIntent().getStringExtra("photo")).into(profileImage);
 
@@ -97,10 +96,6 @@ public class Main2Activity extends AppCompatActivity{
 
         String token = getIntent().getStringExtra("token");
         new GetItemList().execute(token);
-
-        // specify an adapter
-//        mAdapter = new ItemAdapter(itemList);
-//        recyclerItems.setAdapter(mAdapter);
 
         Main2Activity.this.runOnUiThread(new Runnable() {
 
@@ -217,5 +212,16 @@ public class Main2Activity extends AppCompatActivity{
             mAdapter.notifyDataSetChanged();
             pDialog.dismiss();
         }
+    }
+
+    //method to check internet connectivity
+    protected boolean internetKontrol() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        return false;
     }
 }
