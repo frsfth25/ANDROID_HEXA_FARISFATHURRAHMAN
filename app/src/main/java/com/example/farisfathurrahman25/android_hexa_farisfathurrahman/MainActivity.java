@@ -1,7 +1,10 @@
 package com.example.farisfathurrahman25.android_hexa_farisfathurrahman;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,8 +35,6 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
     EditText editMail;
     EditText editPassword;
     Button buttonLogin;
-    TextView textViewError;
-    //SessionManager sessionManager;
 
     private ProgressDialog pDialog;
 
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -56,24 +58,23 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
         editPassword = (EditText) findViewById(R.id.editTextPassword);
         buttonLogin = (Button) findViewById(R.id.btnLogin);
 
-        textViewError = (TextView) findViewById(R.id.tv_error);
-        //sessionManager = new SessionManager(getApplicationContext());
-
     }
 
     public void doLogin(View view) {
+
+        if(!internetKontrol()){
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+        }
 
         String mail = editMail.getText().toString();
         String pass = editPassword.getText().toString();
 
         String validation = validate(mail, pass);
         if(validation.equals("success")){
-            textViewError.setVisibility(View.INVISIBLE);
             new GetUserDetails().execute(mail, pass);
         }
         else {
-            textViewError.setText(validation);
-            textViewError.setVisibility(View.VISIBLE);
+            //Toast.makeText(this, "email atau password salah.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -93,8 +94,6 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
         }
 
         if(result.get(Tags.TAG_SUCCESS).equals("1")){
-            textViewError.setVisibility(View.INVISIBLE);
-            //sessionManager.createLoginSession(result);
 
             Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
             intent.putExtra(
@@ -120,8 +119,7 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
             finish();
         }
         else{
-            textViewError.setText("Username or Password is incorrect!");
-            textViewError.setVisibility(View.VISIBLE);
+            Toast.makeText(this, "email atau password salah.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -233,6 +231,17 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
         if (email == null)
             return false;
         return pat.matcher(email).matches();
+    }
+
+    //method to check internet connectivity
+    protected boolean internetKontrol() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        return false;
     }
 }
 

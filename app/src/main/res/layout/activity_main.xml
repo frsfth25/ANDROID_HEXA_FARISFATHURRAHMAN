@@ -5,12 +5,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center"
+    android:padding="25dp"
     tools:context=".MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Username/Email"/>
+        android:text="Username/Email"
+        android:padding="5dp"/>
 
     <EditText
         android:id="@+id/editTextUsername"
@@ -21,7 +24,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Password"/>
+        android:text="Password"
+        android:padding="5dp"/>
 
 
     <EditText
@@ -37,11 +41,7 @@
         android:layout_height="wrap_content"
         android:text="LOGIN"
         android:background="@color/colorPrimary"
-        android:onClick="doLogin"/>
-
-    <TextView
-        android:id="@+id/tv_error"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:onClick="doLogin"
+        android:layout_margin="15dp"/>
 
 </LinearLayout>
