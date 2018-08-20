@@ -2,15 +2,19 @@ package com.example.farisfathurrahman25.android_hexa_farisfathurrahman;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.MenuItem;
+import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,7 +46,11 @@ import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
+import static android.support.v7.widget.RecyclerView.HORIZONTAL;
 
+/*
+The profile & list activity
+ */
 public class Main2Activity extends AppCompatActivity{
 
     String TAG;
@@ -60,9 +68,7 @@ public class Main2Activity extends AppCompatActivity{
 
     private ProgressDialog pDialog;
 
-    JSONParser jsonParser = new JSONParser();
-
-    String url = "http://hexavara.ip-dynamic.com/androidrec/public/api/mylist";
+    String getUrl = "http://hexavara.ip-dynamic.com/androidrec/public/api/mylist";
 
     ArrayList<Item> itemList;
 
@@ -70,6 +76,8 @@ public class Main2Activity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+
+        getSupportActionBar().setTitle(getIntent().getStringExtra("username"));  // provide compatibility to all the versions
 
         if(!internetKontrol()){
             Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
@@ -105,6 +113,8 @@ public class Main2Activity extends AppCompatActivity{
                 recyclerItems.setAdapter(mAdapter);
                 RecyclerView.LayoutManager layoutManager =
                         new LinearLayoutManager(Main2Activity.this);
+                DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerItems.getContext(),DividerItemDecoration.VERTICAL);
+                recyclerItems.addItemDecoration(dividerItemDecoration);
                 recyclerItems.setLayoutManager(layoutManager);
                 recyclerItems.setHasFixedSize(true);
             }
@@ -130,13 +140,13 @@ public class Main2Activity extends AppCompatActivity{
             List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("Authorization", strings[0]));
 
-            InputStream is = null; String json = null; JSONArray jArr;
+            InputStream getResult = null; String json = null; JSONArray jArr;
 
             // request method is GET
             DefaultHttpClient httpClient = new DefaultHttpClient();
             //String paramString = URLEncodedUtils.format(params, "utf-8");
             //url += "?" + paramString;
-            HttpGet httpGet = new HttpGet(url);
+            HttpGet httpGet = new HttpGet(getUrl);
             httpGet.setHeader("Authorization", strings[0]);
 
             HttpResponse httpResponse = null;
@@ -151,30 +161,34 @@ public class Main2Activity extends AppCompatActivity{
                 //Log.i("Server response", server_response );
                 HttpEntity httpEntity = httpResponse.getEntity();
                 try {
-                    is = httpEntity.getContent();
+                    getResult = httpEntity.getContent();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
-                String server_response = null;
                 try {
-                    server_response = EntityUtils.toString(httpResponse.getEntity());
+                    final String server_response = EntityUtils.toString(httpResponse.getEntity());
+                    Log.i("Server response", server_response );
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),server_response,Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.i("Server response", server_response );
-                return null;
+                return result;
             }
 
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(
-                        is, "iso-8859-1"), 8);
+                        getResult, "iso-8859-1"), 8);
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
                     sb.append(line + "\n");
                 }
-                is.close();
+                getResult.close();
                 json = sb.toString();
             } catch (Exception e) {
                 Log.e("Buffer Error", "Error converting result " + e.toString());
@@ -223,5 +237,23 @@ public class Main2Activity extends AppCompatActivity{
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                startActivity(new Intent(this, MainActivity.class));
+                this.finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 }

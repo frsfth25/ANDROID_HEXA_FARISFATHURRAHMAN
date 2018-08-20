@@ -16,6 +16,9 @@ import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
+/*
+The class that acts as the adapter for the Item class and RecyclerView layout display usage
+ */
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder>{
 
     Context myContext;

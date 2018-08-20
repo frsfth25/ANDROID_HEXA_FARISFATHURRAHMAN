@@ -9,20 +9,32 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,14 +50,14 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
 
     private ProgressDialog pDialog;
 
-    JSONParser jsonParser = new JSONParser();
-
     String token;
     String photo;
     String fullname;
     String username;
     String email;
     String address;
+
+    String postUrl = "http://hexavara.ip-dynamic.com/androidrec/public/api/login";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -54,9 +66,22 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        editMail = (EditText) findViewById(R.id.editTextUsername);
-        editPassword = (EditText) findViewById(R.id.editTextPassword);
-        buttonLogin = (Button) findViewById(R.id.btnLogin);
+        getSupportActionBar().setTitle("Login");  // provide compatibility to all the versions
+
+        editMail = findViewById(R.id.editTextUsername);
+        editPassword = findViewById(R.id.editTextPassword);
+        buttonLogin = findViewById(R.id.btnLogin);
+
+        editPassword.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    buttonLogin.performClick();
+                    return true;
+                }
+                return false;
+            }
+        });
 
     }
 
@@ -74,19 +99,19 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
             new GetUserDetails().execute(mail, pass);
         }
         else {
-            //Toast.makeText(this, "email atau password salah.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error encountered during credentials validation!", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void taskCompletionResult(HashMap<String, String> result) {
 
-        if (result==null)
+        if (result==null || !result.containsKey(Tags.TAG_SUCCESS))
         {
             runOnUiThread(new Runnable() {
                 public void run() {
                     // runs on UI thread
-                    Toast.makeText(getApplicationContext(),"email atau password salah.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(),"Error server or connection!", Toast.LENGTH_SHORT).show();
 
                 }
             });
@@ -119,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
             finish();
         }
         else{
-            Toast.makeText(this, "email atau password salah.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Login attempt interrupted!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -140,29 +165,79 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
         protected HashMap doInBackground(String... strings) {
             String success;
             HashMap<String, String> result = new HashMap<>();
-            try {
 
+            try {
                 List<NameValuePair> params = new ArrayList<>();
                 params.add(new BasicNameValuePair("username", strings[0]));
                 params.add(new BasicNameValuePair("password", strings[1]));
 
-                JSONObject json = jsonParser.makeHttpRequest(Tags.URL_LAST_PATH, "POST", params);
+                InputStream postResult = null; String json = null; JSONObject jObj = null;
 
-                if (json==null)
-                {
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            // runs on UI thread
-                            Toast.makeText(getApplicationContext(),"email atau password salah.", Toast.LENGTH_SHORT).show();
+                // Making HTTP request
+                try {
+                    // request method is POST
+                    // defaultHttpClient
+                    DefaultHttpClient httpClient = new DefaultHttpClient();
+                    HttpPost httpPost = new HttpPost(postUrl);
+                    httpPost.setEntity(new UrlEncodedFormEntity(params));
 
-                        }
-                    });
-                    return null;
+                    HttpResponse httpResponse = httpClient.execute(httpPost);
+
+                    if(httpResponse.getStatusLine().getStatusCode()==200){
+                        //String server_response = EntityUtils.toString(httpResponse.getEntity());
+                        //Log.i("Server response", server_response );
+                        HttpEntity httpEntity = httpResponse.getEntity();
+                        postResult = httpEntity.getContent();
+                    } else {
+                        final String server_response = EntityUtils.toString(httpResponse.getEntity());
+                        Log.i("Server response", server_response );
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                Toast.makeText(getApplicationContext(),server_response,Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        return result;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(
+                            postResult, "iso-8859-1"), 8);
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line + "\n");
+                    }
+                    postResult.close();
+                    json = sb.toString();
+                } catch (Exception e) {
+                    Log.e("Buffer Error", "Error converting result " + e.toString());
+                }
+
+                // try parse the string to a JSON object
+                try {
+                    if (json==null)
+                    {
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                // runs on UI thread
+                                Toast.makeText(getApplicationContext(),"Null data source", Toast.LENGTH_SHORT).show();
+
+                            }
+                        });
+                        return result;
+                    }
+                    jObj = new JSONObject(json);
+                } catch (JSONException e) {
+                    Log.e("JSON Parser", "Error parsing data " + e.toString());
                 }
 
                 Log.d("User Details", json.toString());
 
-                if (json.has("token"))
+                if (jObj.has("token"))
                     success = "1";
                 else
                     success = "0";
@@ -172,26 +247,25 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
                 result.put(Tags.TAG_SUCCESS, success);
 
                 if (success.equals("1")) {
-                    result.put(Tags.TAG_TOKEN, json.getString(Tags.TAG_TOKEN));
-                    token = json.getString(Tags.TAG_TOKEN);
-                    result.put(Tags.TAG_USERNAME, json.getString(Tags.TAG_USERNAME));
-                    username = json.getString(Tags.TAG_USERNAME);
-                    result.put(Tags.TAG_EMAIL, json.getString(Tags.TAG_EMAIL));
-                    email = json.getString(Tags.TAG_EMAIL);
+                    result.put(Tags.TAG_TOKEN, jObj.getString(Tags.TAG_TOKEN));
+                    token = jObj.getString(Tags.TAG_TOKEN);
+                    result.put(Tags.TAG_USERNAME, jObj.getString(Tags.TAG_USERNAME));
+                    username = jObj.getString(Tags.TAG_USERNAME);
+                    result.put(Tags.TAG_EMAIL, jObj.getString(Tags.TAG_EMAIL));
+                    email = jObj.getString(Tags.TAG_EMAIL);
                     //result.put(Tags.TAG_PASSWORD, userObject.getString(Tags.TAG_PASSWORD));
-                    result.put(Tags.TAG_FULLNAME, json.getString(Tags.TAG_FULLNAME));
-                    fullname = json.getString(Tags.TAG_FULLNAME);
-                    result.put(Tags.TAG_ADDRESS, json.getString(Tags.TAG_ADDRESS));
-                    address = json.getString(Tags.TAG_ADDRESS);
-                    result.put(Tags.TAG_PHOTO, json.getString(Tags.TAG_PHOTO));
-                    photo = json.getString(Tags.TAG_PHOTO);
+                    result.put(Tags.TAG_FULLNAME, jObj.getString(Tags.TAG_FULLNAME));
+                    fullname = jObj.getString(Tags.TAG_FULLNAME);
+                    result.put(Tags.TAG_ADDRESS, jObj.getString(Tags.TAG_ADDRESS));
+                    address = jObj.getString(Tags.TAG_ADDRESS);
+                    result.put(Tags.TAG_PHOTO, jObj.getString(Tags.TAG_PHOTO));
+                    photo = jObj.getString(Tags.TAG_PHOTO);
                 }
                 else{
                     runOnUiThread(new Runnable() {
                         public void run() {
                             // runs on UI thread
-                            Toast.makeText(getApplicationContext(),"email atau password salah.", Toast.LENGTH_SHORT).show();
-
+                            Toast.makeText(getApplicationContext(),"Failed to fetch data.", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -209,6 +283,10 @@ public class MainActivity extends AppCompatActivity implements TaskDelegate{
     }
 
     public String validate(String mail, String passwordStr) {
+        if(!internetKontrol()){
+            Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show();
+            return "No internet connection!";
+        }
         if (mail.isEmpty()){
             return "Username cannot be empty!";
         }
