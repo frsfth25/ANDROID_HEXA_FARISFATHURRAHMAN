@@ -22,7 +22,8 @@
             android:id="@+id/txtName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="5dp"/>
+            android:padding="5dp"
+            android:textStyle="bold"/>
 
         <TextView
             android:id="@+id/txtSalary"
